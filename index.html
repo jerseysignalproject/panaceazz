@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Panacea Sound</title>
+<style>
+  :root {
+    --bg: #0a0d0a;
+    --panel: #0d1a0d;
+    --border: #1a2a1a;
+    --accent: #1DB954;
+    --text: #ffffff;
+    --text-dim: #aaaaaa;
+    --font: 'Courier New', Courier, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  #app-container {
+    width: 100%;
+    max-width: 1200px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+
+  /* Top Bar */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    background: #050805;
+  }
+
+  .app-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  .btn {
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    font-family: var(--font);
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #000; border: none; }
+  .btn-primary:hover { filter: brightness(1.2); }
+  .btn-secondary { background: #222; color: #aaa; border: 1px solid #333; }
+  .btn-secondary:hover { background: #333; color: #fff; }
+  .btn-batch { background: #1d3fb9; color: #fff; border: none; }
+  .btn-batch:hover { filter: brightness(1.2); }
+
+  /* Main Layout */
+  .main-area {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #080f08;
+  }
+
+  #jt-count-label {
+    font-size: 10px;
+    color: #555;
+    letter-spacing: 1px;
+    padding: 8px 12px 6px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #jt-track-list {
+    list-style: none;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  #jt-track-list::-webkit-scrollbar { width: 6px; }
+  #jt-track-list::-webkit-scrollbar-thumb { background: #1a2a1a; border-radius: 3px; }
+
+  .jt-track-item {
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-bottom: 1px solid #0a140a;
+    transition: background 0.1s;
+  }
+  .jt-track-item:hover { background: #0f200f; }
+  .jt-track-item.active { background: rgba(29,185,84,0.15) !important; border-left: 3px solid var(--accent); }
+  
+  .jt-tname { font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ccc; }
+  .jt-track-item.active .jt-tname { color: var(--accent); }
+
+  /* Player Area */
+  .player-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 16px 20px;
+    min-width: 0;
+  }
+
+  .now-playing {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+  }
+
+  #jt-art {
+    width: 80px;
+    height: 80px;
+    background: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    flex-shrink: 0;
+    border: 1px solid rgba(29,185,84,0.3);
+    border-radius: 4px;
+  }
+
+  .transport-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  .transport-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--border);
+    color: #aaa;
+    border: 1px solid #2a3a2a;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .transport-btn:hover { background: #223322; color: #fff; }
+  
+  #jt-pbtn {
+    width: 44px; height: 44px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-size: 20px;
+  }
+  #jt-pbtn:hover { filter: brightness(1.1); transform: scale(1.05); }
+
+  .visualizer-wrap {
+    height: 80px;
+    flex-shrink: 0;
+    background: #040804;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  /* Editor Area */
+  .editor-area {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding-right: 10px;
+  }
+  .editor-area::-webkit-scrollbar { width: 6px; }
+  .editor-area::-webkit-scrollbar-thumb { background: #1a2a1a; border-radius: 3px; }
+
+</style>
+</head>
+<body>
+
+<div id="app-container">
+  <div class="top-bar">
+    <div class="app-title">♪ Panacea Sound</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" onclick="JT.genLibrary()">REGENERATE</button>
+      <button class="btn btn-secondary" onclick="JT.download(JT.tracks[JT.idx])">⬇ WAV</button>
+      <button class="btn btn-batch" onclick="JT.batchDownload()">BATCH EXPORT ALL</button>
+    </div>
+  </div>
+
+  <div class="main-area">
+    <div class="sidebar">
+      <div id="jt-count-label">Loading Engine...</div>
+      <ul id="jt-track-list"></ul>
+    </div>
+
+    <div class="player-area">
+      <div class="now-playing">
+        <div id="jt-art">👾</div>
+        <div style="min-width:0;">
+          <div style="font-size:10px; font-weight:bold; color:var(--accent); letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">NOW PLAYING</div>
+          <div id="jt-title" style="font-size:20px; font-weight:bold; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;">Select a track</div>
+          <div id="jt-band" style="font-size:13px; color:#888; margin-bottom:4px;">Procedural Engine</div>
+          <div id="jt-meta" style="font-size:11px; color:#555;">—</div>
+        </div>
+      </div>
+
+      <div class="transport-controls">
+        <button class="transport-btn" onclick="JT.prevUI()">⏮</button>
+        <button class="transport-btn" id="jt-pbtn" onclick="JT.toggle()">▶</button>
+        <button class="transport-btn" onclick="JT.nextUI()">⏭</button>
+        
+        <div style="display:flex; gap:4px; margin-left:12px; background:var(--panel); padding:4px; border-radius:4px; border:1px solid var(--border);">
+          <button id="jt-rep-none" onclick="JT.setRepeat('none')" style="padding:4px 8px;font-size:10px;background:var(--border);color:#aaa;border:none;border-radius:2px;cursor:pointer;" title="No repeat">⏹</button>
+          <button id="jt-rep-one"  onclick="JT.setRepeat('one')"  style="padding:4px 8px;font-size:10px;background:var(--border);color:#aaa;border:none;border-radius:2px;cursor:pointer;" title="Repeat track">🔂</button>
+          <button id="jt-rep-all"  onclick="JT.setRepeat('all')"  style="padding:4px 8px;font-size:10px;background:var(--accent);color:#000;border:none;border-radius:2px;cursor:pointer;" title="Repeat all">🔁</button>
+        </div>
+      </div>
+
+      <div class="visualizer-wrap">
+        <canvas id="jt-canvas" style="width:100%;height:100%;display:block;"></canvas>
+        <div id="jt-debug" style="position:absolute;bottom:4px;left:8px;font-family:monospace;font-size:10px;color:rgba(29,185,84,0.4);">// ENGINE: idle</div>
+      </div>
+
+      <div class="editor-area" id="jt-editor">
+        </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DOM Helpers ────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const $qa = sel => document.querySelectorAll(sel);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// ══════════════════════════════════════════════════════════════
+// ZzFX + ZzFXM — embedded MIT © Frank Force / Keith Clark
+// ══════════════════════════════════════════════════════════════
+let zzfxX; // shared AudioContext
+const zzfxG = 
+(p=1,k=.05,b=220,e=0,r=0,t=.1,q=0,D=1,u=0,y=0,v=0,z=0,l=0,E=0,A=0,F=0,c=0,w=1,m=0,B=0,N=0)=>{
+let M=Math,d=2*M.PI,R=44100,G=u*=500*d/R/R,C=b*=(1-k+2*k*M.random(k=[]))*d/R,
+g=0,H=0,a=0,n=1,I=0,J=0,f=0,h=N<0?-1:1,x=d*h*N*2/R,L=M.cos(x),Z=M.sin,K=Z(x)/4,O=1+K,
+X=-2*L/O,Y=(1-K)/O,P=(1+h*L)/2/O,Q=-(h+L)/O,S=P,T=0,U=0,V=0,W=0;
+e=R*e+9;m*=R;r*=R;t*=R;c*=R;y*=500*d/R**3;A*=d/R;v*=d/R;z*=R;l=R*l|0;
+for(h=e+m+r+t+c|0;a<h;k[a++]=f)
+++J%(100*F|0)||(f=q?1<q?2<q?3<q?4<q?(g/d%1<D/2)*2-1:Z(g**3):M.max(M.min(M.tan(g),1),-1):1-(2*g/d%2+2)%2:1-4*M.abs(M.round(g/d)-g/d):Z(g),
+f=(l?1-B+B*Z(d*a/l):1)*(4<q?f:(f<0?-1:1)*M.abs(f)**D)*
+(a<e?a/e:a<e+m?1-(a-e)/m*(1-w):a<e+m+r?w:a<h-c?(h-a-c)/t*w:0),
+f=c?f/2+(c>a?0:(a<h-c?1:(h-a)/c)*k[a-c|0]/2):f,
+N?f=W=S*T+Q*(T=U)+P*(U=f)-Y*V-X*(V=W):0),
+x=(b+=u+=y)*M.cos(A*H++),g+=x+x*E*Z(a**5),n&&++n>z&&(b+=v,C+=v,n=0),!l||++I%l||(b=C,u=G,n=n||1);
+return k;
+};
+const zzfxP = (...e)=>{
+  if(!zzfxX) try{zzfxX=new(window.AudioContext||window.webkitAudioContext)();}catch(x){return null;}
+  const ac=zzfxX; let b,n,g,i,h=e[0].length;
+  const c=ac.createBuffer(e.length,h,44100);
+  for(i=e.length;i--;) c.getChannelData(i).set(e[i]);
+  b=ac.createBufferSource(); b.buffer=c;
+  const vol=ac.createGain(); vol.gain.value=1;
+  b.connect(vol); vol.connect(ac.destination);
+  b.start(); return b;
+};
+const zzfx=(...p)=>{
+  p[0]=(p[0]||1); // removed mute/vol globals for standalone
+  zzfxP(zzfxG(...p));
+};
+const zzfxM=(n,f,t,e=125)=>{let l,o,z,r,g,h,x,a,u,c,d,i,m,p,G,M=0,R=[],b=[],j=[],k=0,q=0,s=1,v={},w=44100/e*60>>2;for(;s;k++)R=[s=a=d=m=0],t.map((e,d)=>{for(x=f[e][k]||[0,0,0],s|=!!f[e][k],G=m+(f[e][0].length-2-!a)*w,p=d==t.length-1,o=2,r=m;o<x.length+p;a=++o){for(g=x[o],u=o==x.length+p-1&&p||c!=(x[0]||0)|g|0,z=0;z<w&&a;z++>w-99&&u?i+=(i<1)/99:0)h=(1-i)*R[M++]/2||0,b[r]=(b[r]||0)-h*q+h,j[r]=(j[r++]||0)+h*q+h;g&&(i=g%1,q=x[1]||0,(g|=0)&&(R=v[[c=x[M=0]||0,g]]=v[[c,g]]||(l=[...n[c]],l[2]*=2**((g-12)/12),g>0?zzfxG(...l):[])))}}); return[b,j]};
+
+
+// ═══════════════════════════════════════════════════════════════
+// PANACEA SOUND ENGINE (Adapted from JACTunes)
+// ═══════════════════════════════════════════════════════════════
+const JT = {
+    A: null, analyser: null, panner: null, delay: null, feedback: null, wet: null,
+    idx: 0, isPlaying: false, tracks: [], loop: null,
+
+    scales: {
+        pentatonic_maj: [0,2,4,7,9],
+        pentatonic_min: [0,3,5,7,10],
+        natural_minor:  [0,2,3,5,7,8,10],
+        major:          [0,2,4,5,7,9,11],
+        phrygian_dom:   [0,1,4,5,7,8,10],
+        dorian:         [0,2,3,5,7,9,10],
+        mixolydian:     [0,2,4,5,7,9,10],
+        blues:          [0,3,5,6,7,10],
+    },
+
+    progressions: {
+        major:    [[0,2,4],[3,5,0],[4,6,1],[3,5,0]],
+        minor:    [[0,2,4],[5,0,2],[3,5,0],[4,6,1]],
+        lofi:     [[0,2,4],[5,0,2],[3,5,0],[5,0,2]],
+        chip:     [[0,2,4],[0,2,4],[3,5,0],[4,6,1]],
+        heavy:    [[0,2,4],[6,1,3],[5,0,2],[6,1,3]],
+        phrygian: [[0,2,4],[1,3,5],[0,2,4],[1,3,5]],
+    },
+
+    rhythmTemplates: {
+        chip:   { lead:[1,0,1,0,1,0,1,0], bass:[1,0,0,0,1,0,0,0], perc:[1,0,0,1,0,0,1,0] },
+        smooth: { lead:[1,0,0,1,0,1,0,0], bass:[1,0,0,0,1,0,0,0], perc:[1,0,0,0,1,0,0,0] },
+        lofi:   { lead:[1,0,1,0,0,1,0,0], bass:[1,0,0,1,0,0,0,0], perc:[0,0,1,0,0,0,1,0] },
+        heavy:  { lead:[1,1,0,1,1,0,1,0], bass:[1,0,1,0,1,0,0,1], perc:[1,0,1,1,0,1,1,0] },
+    },
+
+    OSC_TYPES: ['sine','square','sawtooth','triangle'],
+
+    arrangements: [
+        { name:'Standard NES',    lead:'square',   pad:'square',   bass:'triangle', leadVol:0.10, padVol:0.04, bassVol:0.32, style:'chip',   prog:'chip'     },
+        { name:'Smooth Sine',     lead:'sine',     pad:'sine',     bass:'sine',     leadVol:0.18, padVol:0.07, bassVol:0.42, style:'smooth', prog:'major'    },
+        { name:'Aggressive Saw',  lead:'sawtooth', pad:'square',   bass:'square',   leadVol:0.06, padVol:0.03, bassVol:0.22, style:'heavy',  prog:'heavy'    },
+        { name:'Lofi Chill',      lead:'sine',     pad:'triangle', bass:'triangle', leadVol:0.14, padVol:0.06, bassVol:0.38, style:'lofi',   prog:'lofi'     },
+        { name:'Lofi Dreams',     lead:'triangle', pad:'sine',     bass:'sine',     leadVol:0.18, padVol:0.08, bassVol:0.46, style:'lofi',   prog:'lofi'     },
+        { name:'Chiptune Glitch', lead:'square',   pad:'triangle', bass:'sawtooth', leadVol:0.08, padVol:0.03, bassVol:0.18, style:'chip',   prog:'minor'    },
+        { name:'Deep Acid',       lead:'sawtooth', pad:'sawtooth', bass:'sawtooth', leadVol:0.05, padVol:0.02, bassVol:0.20, style:'heavy',  prog:'phrygian' },
+        { name:'Hollow Pulse',    lead:'square',   pad:'sine',     bass:'triangle', leadVol:0.07, padVol:0.04, bassVol:0.42, style:'smooth', prog:'minor'    },
+        { name:'Turbo Wave',      lead:'triangle', pad:'square',   bass:'sawtooth', leadVol:0.28, padVol:0.05, bassVol:0.22, style:'heavy',  prog:'heavy'    },
+        { name:'Vapor Bass',      lead:'sine',     pad:'triangle', bass:'sawtooth', leadVol:0.10, padVol:0.06, bassVol:0.14, style:'lofi',   prog:'lofi'     },
+    ],
+
+    lexicon: {
+        chip:   { pre:['Crystal','Pixel','Bit','Mega','Hyper'],        suf:['Zone','World','Quest','Level','Boss']   },
+        lofi:   { pre:['Midnight','Rainy','Coffee','Distant','Velvet'],suf:['Nap','Stroll','Dream','Tape','Vibe']   },
+        heavy:  { pre:['Acid','Reactor','Omega','Vortex','Hard'],      suf:['Crush','Break','Core','Noise','Storm'] },
+        smooth: { pre:['Liquid','Solar','Cloud','Ether','Neon'],       suf:['Flow','Drift','Pulse','Light','Path']  },
+    },
+
+    _scaleForStyle(style) {
+        const map = {
+            chip:   ['pentatonic_maj','major','mixolydian'],
+            smooth: ['major','dorian','mixolydian'],
+            lofi:   ['pentatonic_min','dorian','natural_minor'],
+            heavy:  ['phrygian_dom','blues','natural_minor'],
+        };
+        const opts = map[style] || ['pentatonic_maj'];
+        return opts[Math.random()*opts.length|0];
+    },
+
+    _buildMelody(scale, chordIdx, rhythmTpl, isCallPattern) {
+        const notes = [], rests = [];
+        let prev = chordIdx;
+        for(let i=0; i<8; i++) {
+            const rval = rhythmTpl[i];
+            if(rval===0 || (rval===0.5 && Math.random()<0.5) || (rval===1 && Math.random()<0.15)) {
+                notes.push(prev); rests.push(true); continue;
+            }
+            rests.push(false);
+            let next;
+            const r = Math.random();
+            if(r < 0.60) {
+                next = Math.max(0, Math.min(scale.length-1, prev + (Math.random()<0.5?1:-1)));
+            } else if(r < 0.85) {
+                next = Math.max(0, Math.min(scale.length-1, prev + (Math.random()<0.5?2:-2)));
+            } else {
+                next = [chordIdx,(chordIdx+2)%scale.length,(chordIdx+4)%scale.length][Math.random()*3|0];
+            }
+            if(i===5 && Math.random()<0.6) next = Math.min(scale.length-1, next+1);
+            if(i===7) next = Math.random()<0.5 ? chordIdx : (chordIdx+4)%scale.length;
+            notes.push(next); prev = next;
+        }
+        return {notes, rests};
+    },
+
+    _buildBass(scale, chordRoot, rhythmTpl, style) {
+        const root = scale[chordRoot] || 0;
+        const notes = [], rests = [];
+        for(let i=0; i<8; i++) {
+            const rval = rhythmTpl[i];
+            if(rval===0) { notes.push(root); rests.push(true); continue; }
+            rests.push(false);
+            let note;
+            if(i===0||i===4) note = root;
+            else if(style==='heavy'&&i%2===1) note=[root-12,root-7][Math.random()*2|0];
+            else if(style==='lofi') note=[root,root-7,root-5][Math.random()*3|0];
+            else note=[root,root-12,root-7][Math.random()*3|0];
+            notes.push(note);
+        }
+        return {notes, rests};
+    },
+
+    _buildPerc(style) {
+        const templates = {
+            chip:   [1,0,0,0,1,0,0,0],
+            smooth: [1,0,0,0,1,0,0,0],
+            lofi:   [0,0,1,0,0,0,1,0],
+            heavy:  [1,0,1,1,0,1,1,0],
+        };
+        const base = (templates[style]||templates.chip).slice();
+        return base.map(v => v ? 1 : (Math.random()<(style==='heavy'?0.35:0.15)?0.4:0));
+    },
+
+    panelInit() {
+        if(!this.tracks.length) this.genLibrary();
+        this._startDraw();
+    },
+
+    init() {
+        if(this.A) return;
+        this.A = new (window.AudioContext || window.webkitAudioContext)();
+        this.analyser = this.A.createAnalyser();
+        this.analyser.fftSize = 128;
+        this.panner   = this.A.createStereoPanner();
+        this.delay    = this.A.createDelay(2.0);
+        this.feedback = this.A.createGain();
+        this.wet      = this.A.createGain();
+        this.panner.connect(this.analyser);
+        this.delay.connect(this.feedback);
+        this.feedback.connect(this.delay);
+        this.delay.connect(this.analyser);
+        this.analyser.connect(this.A.destination);
+    },
+
+    genLibrary() {
+        if(this.loop) clearTimeout(this.loop);
+        this.isPlaying = false;
+        this.tracks = [];
+        const bandNames = ['The 8-Bit Invaders','Deep Space Echo','Mycelium Beats','Phantasmagoria','System Error'];
+        const monsters  = ['👾','👽','🤖','🍄','👻','🐉','🐙','💀'];
+        const activeBands = bandNames.map(name => ({
+            name,
+            emoji: monsters[Math.random()*monsters.length|0],
+            styles: name.includes('Beats') ? ['lofi'] :
+                    name.includes('Error') ? ['heavy','chip'] : ['smooth','chip','lofi'],
+        }));
+
+        for(let j=0; j<50; j++){
+            const band   = activeBands[Math.random()*activeBands.length|0];
+            const validArr = this.arrangements.filter(a => band.styles.includes(a.style));
+            const pool   = validArr.length ? validArr : this.arrangements;
+            const instr  = pool[Math.floor(Math.random()*pool.length)];
+            const tinstr = Object.assign({}, instr);
+            const scaleKey = this._scaleForStyle(instr.style);
+            const scale    = this.scales[scaleKey];
+            const prog     = this.progressions[instr.prog] || this.progressions.major;
+            const rtpl     = this.rhythmTemplates[instr.style];
+            const trackPatterns = [];
+            
+            for(let i=0; i<8; i++){
+                const chordDef  = prog[i%prog.length];
+                const chordRoot = chordDef[0];
+                const melody    = this._buildMelody(scale, chordRoot, rtpl.lead, i%2===0);
+                const bassLine  = this._buildBass(scale, chordRoot, rtpl.bass, instr.style);
+                const percLine  = this._buildPerc(instr.style);
+                const padArp    = Math.random()<0.4;
+                const padNotes  = Array.from({length:8},(_,s)=>padArp?scale[chordDef[s%3]]:scale[chordDef[0]]);
+                const vel       = Array.from({length:8},(_,s)=>s===0?1.1:s===4?0.95:0.6+Math.random()*0.4);
+                trackPatterns.push({melody,bassLine,percLine,padNotes,vel,chordRoot,chordDef,isCall:i%2===0});
+            }
+            
+            const lex  = this.lexicon[instr.style];
+            const name = `${lex.pre[Math.random()*lex.pre.length|0]} ${lex.suf[Math.random()*lex.suf.length|0]} #${Math.random().toString(36).substring(7).toUpperCase()}`;
+            const bpm = instr.style==='lofi'?(96+Math.random()*20|0):(100+Math.random()*50|0);
+            
+            // Aim for ~3 minutes (180 seconds) playback duration
+            // duration = (seqLen * 8) * (60 / (bpm * 2)) = seqLen * 240 / bpm
+            // seqLen = targetDuration * bpm / 240
+            const targetSec = 180;
+            const seqLen = Math.round(targetSec * bpm / 240);
+            
+            this.tracks.push({
+                band: band.name, name, emoji: band.emoji,
+                bpm,
+                instr: tinstr, patterns: trackPatterns, scale, scaleKey,
+                fx:{
+                    reverb:   +(Math.random()*0.4).toFixed(3),
+                    echo:     +(Math.random()*0.3).toFixed(3),
+                    intensity:+(0.9+Math.random()*0.4).toFixed(3),
+                    bassShift:[0,-12][Math.random()*2|0],
+                    sustain:  +(0.08+Math.random()*0.25).toFixed(3),
+                    pan:      +((Math.random()*1.6-0.8)).toFixed(3),
+                    swing:    instr.style==='lofi'?+(0.55+Math.random()*0.1).toFixed(3):0.5,
+                },
+                seq: Array.from({length:seqLen},()=>Math.random()*8|0)
+            });
+        }
+        this._renderList();
+        const pb = $('jt-pbtn');
+        if(pb) pb.textContent = '▶';
+        const lbl = $('jt-count-label');
+        if(lbl) lbl.textContent = `${this.tracks.length} Procedural Compositions`;
+    },
+
+    tick(trackIdx, step, gen){
+        if(!this.isPlaying || trackIdx!==this.idx || gen!==this._gen) return;
+        const track = this.tracks[trackIdx];
+        if(step >= track.seq.length*8){ this.next(); return; }  
+        
+        const pat   = track.patterns[track.seq[Math.floor(step/8)]];
+        const sub   = step%8;
+        const speed = 60/track.bpm/2;
+        const now   = this.A.currentTime;
+        const swingOffset = (sub%2===1 && track.fx.swing>0.5) ? speed*(track.fx.swing-0.5)*2 : 0;
+        const t = now + swingOffset;
+        
+        this.delay.delayTime.setTargetAtTime(speed*1.5, now, 0.1);
+        this.feedback.gain.setTargetAtTime(track.fx.echo,      now, 0.1);
+        this.wet.gain.setTargetAtTime(track.fx.reverb,          now, 0.1);
+        this.panner.pan.setTargetAtTime(track.fx.pan,           now, 0.1);
+        
+        const g=track.fx.intensity, vel=pat.vel[sub], sus=track.fx.sustain;
+        if(!pat.melody.rests[sub]){
+            const note=track.scale[pat.melody.notes[sub]]+12;
+            this._osc(note,track.instr.lead,track.instr.leadVol*g*vel,t,sus);
+        }
+        if(!pat.bassLine.rests[sub]){
+            const bn=pat.bassLine.notes[sub]+track.fx.bassShift;
+            this._osc(bn,track.instr.bass,track.instr.bassVol*g*vel,t,sus*1.4);
+            this._osc(bn-12,'sine',track.instr.bassVol*0.6*g,t,sus*2);
+        }
+        const padNote=pat.padNotes[sub];
+        this._osc(padNote,track.instr.pad,track.instr.padVol*g,t,sus*2.5);
+        
+        const percVal=pat.percLine[sub];
+        if(percVal>0) this._noise(percVal===1?0.06*g:0.025*g, t);
+        if(track.instr.style==='lofi'&&Math.random()>0.85) this._noise(0.008,t,true);
+        
+        this.loop = setTimeout(()=>this.tick(trackIdx,step+1,gen),(speed-swingOffset)*1000);
+    },
+
+    _osc(note,type,vol,time,sustain){
+        if(vol<=0.001) return;
+        const o=this.A.createOscillator(), g=this.A.createGain();
+        o.type=type;
+        const freq=220*Math.pow(2,note/12);
+        if(!isFinite(freq)||freq<=0) return;
+        o.frequency.value=freq;
+        g.gain.setValueAtTime(0.0001,time);
+        g.gain.setTargetAtTime(vol,time,0.015);
+        g.gain.setTargetAtTime(0.0001,time+sustain,0.05);
+        o.connect(g).connect(this.panner);
+        g.connect(this.wet).connect(this.delay);
+        o.start(time); o.stop(time+sustain+0.5);
+    },
+
+    _noise(vol,time,isCrackle=false){
+        const len=this.A.sampleRate*(isCrackle?0.01:0.05);
+        const b=this.A.createBuffer(1,len,this.A.sampleRate), d=b.getChannelData(0);
+        for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+        const s=this.A.createBufferSource(), g2=this.A.createGain();
+        s.buffer=b; g2.gain.value=vol;
+        s.connect(g2).connect(isCrackle?this.panner:this.analyser);
+        s.start(time);
+    },
+
+    play(){
+        this.init();
+        if(this.loop) clearTimeout(this.loop);
+        this._gen = (this._gen||0) + 1;
+        const gen = this._gen;
+        const idx = this.idx;
+        this.isPlaying=true;
+        const doTick = ()=>{ if(this.isPlaying && this.idx===idx) this.tick(idx,0,gen); };
+        if(this.A.state==='suspended'){ this.A.resume().then(doTick); }
+        else { doTick(); }
+        
+        const t=this.tracks[this.idx];
+        const dur=(t.seq.length*8)*(60/t.bpm/2);
+        const mm=`${Math.floor(dur/60)}:${Math.floor(dur%60).toString().padStart(2,'0')}`;
+        
+        const _s=(id,v)=>{const el=$(id);if(el)el.textContent=v;};
+        _s('jt-title',t.name); _s('jt-band',t.band);
+        _s('jt-meta',`${t.instr.name} · ${t.scaleKey} · BPM ${t.bpm} · Length: ${mm}`);
+        _s('jt-pbtn','⏸');
+        const art=$('jt-art'); if(art) art.textContent=t.emoji;
+        
+        this._updateActive();
+        this._renderEditor(this.idx);
+        this._scrollToActive();
+    },
+
+    toggle(){
+        if(this.isPlaying){
+            this.isPlaying=false; clearTimeout(this.loop);
+            const pb=$('jt-pbtn'); if(pb) pb.textContent='▶';
+        } else { this.play(); }
+    },
+
+    _repeatMode: 'all',
+
+    next(){
+        if(this._repeatMode==='one'){ this.play(); return; }
+        this.idx=(this.idx+1)%this.tracks.length;
+        if(this._repeatMode==='none'&&this.idx===0){ 
+            this.isPlaying=false; 
+            const pb=$('jt-pbtn'); if(pb)pb.textContent='▶'; 
+            return; 
+        }
+        this.play();
+    },
+    nextUI(){ this.idx=(this.idx+1)%this.tracks.length; this.play(); },
+    prevUI(){ this.idx=(this.idx-1+this.tracks.length)%this.tracks.length; this.play(); },
+
+    setRepeat(mode){
+        this._repeatMode=mode;
+        ['none','one','all'].forEach(m=>{
+            const btn=$('jt-rep-'+m);
+            if(btn) btn.style.background=m===mode?'var(--accent)':'var(--border)';
+            if(btn) btn.style.color=m===mode?'#000':'#aaa';
+        });
+    },
+
+    _updateActive(){
+        $qa('.jt-track-item').forEach((el,i)=>{
+            const active=i===this.idx;
+            el.classList.toggle('active',active);
+        });
+    },
+
+    _scrollToActive(){
+        const list=$('jt-track-list');
+        if(!list) return;
+        const active=list.querySelector('.jt-track-item.active');
+        if(active) active.scrollIntoView({block:'nearest',behavior:'smooth'});
+    },
+
+    _renderList(){
+        const l=$('jt-track-list');
+        if(!l) return;
+        l.innerHTML='';
+        this.tracks.forEach((t,i)=>{
+            const dur=(t.seq.length*8)*(60/t.bpm/2);
+            const mm=`${Math.floor(dur/60)}:${Math.floor(dur%60).toString().padStart(2,'0')}`;
+            const li=document.createElement('li');
+            li.className='jt-track-item'+(i===this.idx?' active':'');
+            li.innerHTML=`<div style="display:flex;align-items:center;gap:12px;overflow:hidden;min-width:0;">
+              <span style="font-size:22px;flex-shrink:0;">${t.emoji}</span>
+              <div style="min-width:0;">
+                <div class="jt-tname">${esc(t.name)}</div>
+                <div style="font-size:10px;color:#777;margin-top:2px;">${esc(t.band)}</div>
+              </div>
+            </div>
+            <span style="font-family:monospace;font-size:11px;color:#666;flex-shrink:0;margin-left:10px;">${mm}</span>`;
+            li.onclick=()=>{this.idx=i; this.play();};
+            l.appendChild(li);
+        });
+    },
+
+    _renderEditor(i){
+        const ed=$('jt-editor');
+        if(!ed) return;
+        const t=this.tracks[i];
+        if(!t){ ed.innerHTML=''; return; }
+
+        const row=(label,input)=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <label style="font-size:11px;color:#889988;letter-spacing:.05em;width:80px;flex-shrink:0;text-transform:uppercase;">${label}</label>
+          ${input}
+        </div>`;
+
+        const slider=(id,val,min,max,step,extra='')=>
+          `<input type="range" id="${id}" value="${val}" min="${min}" max="${max}" step="${step}"
+           oninput="JT.applyEdit()" ${extra}
+           style="flex:1;accent-color:var(--accent);height:4px;cursor:pointer;">
+           <span id="${id}-disp" style="font-size:11px;color:var(--accent);font-family:monospace;width:36px;text-align:right;">${val}</span>`;
+
+        const sel=(id,val,opts)=>
+          `<select id="${id}" onchange="JT.applyEdit()"
+           style="flex:1;background:#0d1a0d;color:#aaa;border:1px solid #1a2a1a;font-size:12px;padding:4px;border-radius:3px;">
+           ${opts.map(o=>`<option value="${o}"${o===val?' selected':''}>${o}</option>`).join('')}
+          </select>`;
+
+        const grid=(id,arr)=>{
+            const btns=arr.map((v,j)=>{
+                const active=v>0;
+                const ghost=v>0&&v<1;
+                const bg=ghost?'#1a3a1a':active?'var(--accent)':'#111';
+                const fc=ghost?'#aaa':active?'#000':'#333';
+                return `<button id="${id}-${j}" onclick="JT.toggleRhythm('${id}',${j})"
+                  style="flex:1;height:24px;padding:0;font-size:10px;border:1px solid #1a2a1a;background:${bg};color:${fc};cursor:pointer;border-radius:2px;"
+                  title="${v}">${v>0?(v===1?'●':'◑'):'·'}</button>`;
+            }).join('');
+            return `<div style="display:flex;gap:4px;margin-bottom:6px;">${btns}</div>`;
+        };
+
+        const percArr=t.patterns[0].percLine;
+        const leadArr=t.patterns[0].melody.rests.map(r=>r?0:1);
+        const bassArr=t.patterns[0].bassLine.rests.map(r=>r?0:1);
+
+        ed.innerHTML=`
+        <div style="font-size:12px;color:var(--accent);letter-spacing:.1em;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #1a2a1a;">
+          ▸ TRACK EDITOR — <span style="color:#aaa">${esc(t.name)}</span>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:24px;">
+          
+          <div style="flex:1; min-width:250px;">
+            <div style="font-size:11px;color:#889988;letter-spacing:.08em;margin-bottom:12px;">TRANSPORT & MIX</div>
+            ${row('BPM', slider('jt-e-bpm',t.bpm,40,200,1))}
+            ${row('SUSTAIN', slider('jt-e-sus',t.fx.sustain,0.01,0.5,0.01))}
+            ${row('SWING',   slider('jt-e-swing',t.fx.swing,0.5,0.65,0.01))}
+            ${row('SEQ LEN', slider('jt-e-seqlen',t.seq.length,4,512,1, 'title="Length of the track in patterns (affects total duration)"'))}
+            <div style="height:8px;"></div>
+            ${row('LEAD VOL',  slider('jt-e-leadv',t.instr.leadVol,0,0.5,0.005))}
+            ${row('BASS VOL',  slider('jt-e-bassv',t.instr.bassVol,0,0.7,0.005))}
+            ${row('PAD VOL',   slider('jt-e-padv', t.instr.padVol, 0,0.3,0.005))}
+            ${row('REVERB',    slider('jt-e-rev',  t.fx.reverb,   0,0.9,0.01))}
+            ${row('ECHO',      slider('jt-e-echo', t.fx.echo,     0,0.9,0.01))}
+            ${row('PAN',       slider('jt-e-pan',  t.fx.pan,     -1,  1,0.01))}
+            ${row('INTENSITY', slider('jt-e-int',  t.fx.intensity,0.3,2.0,0.01))}
+          </div>
+
+          <div style="flex:1; min-width:250px;">
+            <div style="font-size:11px;color:#889988;letter-spacing:.08em;margin-bottom:12px;">SYNTHESIZERS</div>
+            ${row('BASS OCT',  `<select id="jt-e-bshift" onchange="JT.applyEdit()"
+               style="flex:1;background:#0d1a0d;color:#aaa;border:1px solid #1a2a1a;font-size:12px;padding:4px;border-radius:3px;">
+               <option value="0"${t.fx.bassShift===0?' selected':''}>Normal</option>
+               <option value="-12"${t.fx.bassShift===-12?' selected':''}>-1 Octave</option>
+               </select>`)}
+            ${row('LEAD OSC', sel('jt-e-leadosc',t.instr.lead,  this.OSC_TYPES))}
+            ${row('BASS OSC', sel('jt-e-bassosc',t.instr.bass,  this.OSC_TYPES))}
+            ${row('PAD OSC',  sel('jt-e-padosc', t.instr.pad,   this.OSC_TYPES))}
+
+            <div style="font-size:11px;color:#889988;letter-spacing:.08em;margin:24px 0 12px;">RHYTHM — PATTERN 0</div>
+            <div style="margin-bottom:4px;font-size:10px;color:#667766;">LEAD</div>
+            ${grid('jt-rg-lead', leadArr)}
+            <div style="margin:8px 0 4px;font-size:10px;color:#667766;">BASS</div>
+            ${grid('jt-rg-bass', bassArr)}
+            <div style="margin:8px 0 4px;font-size:10px;color:#667766;">PERC</div>
+            ${grid('jt-rg-perc', percArr)}
+
+            <div style="margin-top:16px;display:flex;gap:10px;">
+              <button onclick="JT.regeneratePatterns()" style="flex:1;padding:8px 0;font-size:11px;background:#0d1a0d;color:var(--accent);border:1px solid #1a2a1a;cursor:pointer;border-radius:3px;">↺ NEW PATTERNS</button>
+              <button onclick="JT.randomizeFX()" style="flex:1;padding:8px 0;font-size:11px;background:#0d1a0d;color:#aaa;border:1px solid #1a2a1a;cursor:pointer;border-radius:3px;">↺ RANDOMIZE FX</button>
+            </div>
+          </div>
+          
+        </div>`;
+    },
+
+    applyEdit(){
+        const t=this.tracks[this.idx];
+        if(!t) return;
+        const g=(id)=>$(id);
+        const gv=(id)=>{ const el=g(id); return el?+el.value:null; };
+        const gs=(id)=>{ const el=g(id); return el?el.value:null; };
+
+        const sliders=['bpm','sus','swing','seqlen','leadv','bassv','padv','rev','echo','pan','int'];
+        sliders.forEach(s=>{
+            const el=g(`jt-e-${s}`), sp=g(`jt-e-${s}-disp`);
+            if(el&&sp) sp.textContent=parseFloat(el.value).toFixed(el.step<0.1?3:0);
+        });
+
+        const newBpm=gv('jt-e-bpm'); if(newBpm) t.bpm=newBpm|0;
+        const newSus=gv('jt-e-sus'); if(newSus!==null) t.fx.sustain=newSus;
+        const newSwing=gv('jt-e-swing'); if(newSwing!==null) t.fx.swing=newSwing;
+        
+        const newLen=gv('jt-e-seqlen');
+        if(newLen!==null && newLen!==t.seq.length){
+            while(t.seq.length<newLen) t.seq.push(Math.random()*8|0);
+            t.seq.length=newLen|0;
+        }
+
+        const nLV=gv('jt-e-leadv'); if(nLV!==null) t.instr.leadVol=nLV;
+        const nBV=gv('jt-e-bassv'); if(nBV!==null) t.instr.bassVol=nBV;
+        const nPV=gv('jt-e-padv');  if(nPV!==null) t.instr.padVol=nPV;
+        const nRv=gv('jt-e-rev');   if(nRv!==null) t.fx.reverb=nRv;
+        const nEc=gv('jt-e-echo');  if(nEc!==null) t.fx.echo=nEc;
+        const nPn=gv('jt-e-pan');   if(nPn!==null) t.fx.pan=nPn;
+        const nIn=gv('jt-e-int');   if(nIn!==null) t.fx.intensity=nIn;
+        const nBs=gs('jt-e-bshift'); if(nBs!==null) t.fx.bassShift=+nBs;
+
+        const nLO=gs('jt-e-leadosc'); if(nLO) t.instr.lead=nLO;
+        const nBO=gs('jt-e-bassosc'); if(nBO) t.instr.bass=nBO;
+        const nPO=gs('jt-e-padosc');  if(nPO) t.instr.pad=nPO;
+
+        const dur=(t.seq.length*8)*(60/t.bpm/2);
+        const mm=`${Math.floor(dur/60)}:${Math.floor(dur%60).toString().padStart(2,'0')}`;
+        const m=$('jt-meta');
+        if(m) m.textContent=`${t.instr.name} · ${t.scaleKey} · BPM ${t.bpm} · Length: ${mm}`;
+        
+        // Also update the list time
+        this._renderList();
+    },
+
+    toggleRhythm(gridId, stepIdx){
+        const t=this.tracks[this.idx];
+        if(!t) return;
+        const pat=t.patterns[0];
+        let arr;
+        if(gridId==='jt-rg-lead') arr=pat.melody.rests;
+        else if(gridId==='jt-rg-bass') arr=pat.bassLine.rests;
+        else arr=pat.percLine;
+
+        if(gridId==='jt-rg-lead'||gridId==='jt-rg-bass'){
+            arr[stepIdx]=!arr[stepIdx];
+        } else {
+            const cur=arr[stepIdx];
+            arr[stepIdx]=cur===0?1:cur===1?0.4:0;
+        }
+        this._renderEditor(this.idx);
+    },
+
+    regeneratePatterns(){
+        const t=this.tracks[this.idx];
+        if(!t) return;
+        const prog=this.progressions[t.instr.prog]||this.progressions.major;
+        const rtpl=this.rhythmTemplates[t.instr.style];
+        t.patterns=[];
+        for(let i=0;i<8;i++){
+            const chordDef=prog[i%prog.length], chordRoot=chordDef[0];
+            const melody  =this._buildMelody(t.scale,chordRoot,rtpl.lead,i%2===0);
+            const bassLine=this._buildBass(t.scale,chordRoot,rtpl.bass,t.instr.style);
+            const percLine=this._buildPerc(t.instr.style);
+            const padArp  =Math.random()<0.4;
+            const padNotes=Array.from({length:8},(_,s)=>padArp?t.scale[chordDef[s%3]]:t.scale[chordDef[0]]);
+            const vel     =Array.from({length:8},(_,s)=>s===0?1.1:s===4?0.95:0.6+Math.random()*0.4);
+            t.patterns.push({melody,bassLine,percLine,padNotes,vel,chordRoot,chordDef,isCall:i%2===0});
+        }
+        this._renderEditor(this.idx);
+    },
+
+    randomizeFX(){
+        const t=this.tracks[this.idx];
+        if(!t) return;
+        t.fx.reverb   =+(Math.random()*0.4).toFixed(3);
+        t.fx.echo     =+(Math.random()*0.3).toFixed(3);
+        t.fx.intensity=+(0.9+Math.random()*0.4).toFixed(3);
+        t.fx.sustain  =+(0.08+Math.random()*0.25).toFixed(3);
+        t.fx.pan      =+((Math.random()*1.6-0.8)).toFixed(3);
+        this._renderEditor(this.idx);
+    },
+
+    async download(t){
+        if(!t){ console.warn('No track selected'); return; }
+        const sr=44100, stepTime=60/t.bpm/2, total=t.seq.length*8;
+        const offCtx=new OfflineAudioContext(2,Math.ceil(sr*(total*stepTime+1)),sr);
+        for(let s=0;s<total;s++){
+            const time=s*stepTime, pat=t.patterns[t.seq[Math.floor(s/8)]];
+            const sub=s%8, g=t.fx.intensity, vel=pat.vel[sub], sus=t.fx.sustain, pan=t.fx.pan;
+            if(!pat.melody.rests[sub]){
+                const note=t.scale[pat.melody.notes[sub]]+12;
+                this._renderOsc(offCtx,note,t.instr.lead,t.instr.leadVol*g*vel,time,sus,pan);
+            }
+            if(!pat.bassLine.rests[sub]){
+                const bn=pat.bassLine.notes[sub]+t.fx.bassShift;
+                this._renderOsc(offCtx,bn,t.instr.bass,t.instr.bassVol*g*vel,time,sus*1.4,pan);
+                this._renderOsc(offCtx,bn-12,'sine',t.instr.bassVol*0.6*g,time,sus*2,pan);
+            }
+            this._renderOsc(offCtx,pat.padNotes[sub],t.instr.pad,t.instr.padVol*g,time,sus*2.5,pan);
+            const pv=pat.percLine[sub];
+            if(pv>0){
+                const nl=Math.ceil(sr*0.05), nb=offCtx.createBuffer(1,nl,sr), nd=nb.getChannelData(0);
+                for(let i=0;i<nl;i++) nd[i]=Math.random()*2-1;
+                const ns=offCtx.createBufferSource(), ng=offCtx.createGain();
+                ns.buffer=nb; ng.gain.value=(pv===1?0.06:0.025)*g;
+                ns.connect(ng).connect(offCtx.destination); ns.start(time);
+            }
+        }
+        const rendered=await offCtx.startRendering();
+        const blob=new Blob([this._bufferToWav(rendered)],{type:'audio/wav'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url; a.download=`${t.band}_${t.name.replace(/#/g,'')}.wav`.replace(/\s+/g,'_');
+        a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+    },
+
+    _renderOsc(ctx,note,type,vol,time,sustain,pan){
+        if(vol<=0.001) return;
+        const o=ctx.createOscillator(),g=ctx.createGain(),p=ctx.createStereoPanner();
+        o.type=type;
+        const freq2=220*Math.pow(2,note/12);
+        if(!isFinite(freq2)||freq2<=0){o.stop();return;}
+        o.frequency.value=freq2; p.pan.value=pan;
+        g.gain.setValueAtTime(0.0001,time);
+        g.gain.setTargetAtTime(vol,time,0.015);
+        g.gain.setTargetAtTime(0.0001,time+sustain,0.05);
+        o.connect(g).connect(p).connect(ctx.destination);
+        o.start(time); o.stop(time+sustain+0.5);
+    },
+
+    batchDownload(){
+        if(!confirm(`Export all ${this.tracks.length} tracks as WAV files?`)) return;
+        this.tracks.forEach((t,i)=>setTimeout(()=>this.download(t),i*600));
+    },
+
+    _bufferToWav(abuffer){
+        const nCh=abuffer.numberOfChannels,len=abuffer.length*nCh*2+44;
+        const buf=new ArrayBuffer(len),view=new DataView(buf);
+        let pos=0;
+        const u16=d=>{view.setUint16(pos,d,true);pos+=2;};
+        const u32=d=>{view.setUint32(pos,d,true);pos+=4;};
+        u32(0x46464952);u32(len-8);u32(0x45564157);u32(0x20746d66);u32(16);
+        u16(1);u16(nCh);u32(abuffer.sampleRate);u32(abuffer.sampleRate*2*nCh);
+        u16(nCh*2);u16(16);u32(0x61746164);u32(len-pos-4);
+        let off=0;
+        while(pos<len){
+            for(let i=0;i<nCh;i++){
+                const s=Math.max(-1,Math.min(1,abuffer.getChannelData(i)[off]||0));
+                view.setInt16(pos,s<0?s*0x8000:s*0x7FFF,true);pos+=2;
+            }
+            off++;
+        }
+        return buf;
+    },
+
+    _startDraw(){
+        if(this._drawRunning) return;
+        this._drawRunning=true;
+        const loop=()=>{
+            requestAnimationFrame(loop);
+            const canvas=$('jt-canvas');
+            if(!canvas) return;
+            const rect=canvas.getBoundingClientRect();
+            if(canvas.width!==(rect.width|0))  canvas.width =rect.width|0||400;
+            if(canvas.height!==(rect.height|0)) canvas.height=rect.height|0||80;
+            const ctx=canvas.getContext('2d');
+            ctx.fillStyle='#040804'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            if(!this.analyser) return;
+            const data=new Uint8Array(this.analyser.frequencyBinCount);
+            this.analyser.getByteFrequencyData(data);
+            const bw=canvas.width/data.length, h=canvas.height;
+            data.forEach((v,i)=>{
+                const barH=(v/255)*h;
+                // Green aesthetic
+                const gColor=Math.floor(v/255*180)+50;
+                ctx.fillStyle=`rgb(0,${gColor},${gColor>>2})`;
+                ctx.fillRect(i*bw+1,h-barH,Math.max(1,bw-2),barH);
+            });
+        };
+        loop();
+    }
+};
+
+// Initialize Panacea Sound automatically on load
+window.addEventListener('DOMContentLoaded', () => {
+    JT.panelInit();
+});
+
+</script>
+</body>
+</html>
