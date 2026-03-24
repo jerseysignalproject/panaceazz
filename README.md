@@ -1,6 +1,8 @@
 Panacea Sound (zzfxm Edition)
 Panacea Sound is a standalone, procedural music engine and synthesizer toy. It is a specialized port of the JACTunes/JACTUBE engine, powered by the ZzFXM (ZzFX Music) framework. This version is completely self-contained with no external dependencies, utilizing the Web Audio API to generate infinite, high-fidelity chiptune, lofi, and ambient compositions directly in the browser. There also exists a webaudio version with a similar featureset.
 
+Live Demo Here - https://jerseysignalproject.github.io/panaceazz/
+
 🚀 Features
 Procedural Composition: Generates unique tracks on the fly using mathematical scales and rhythm templates.
 
